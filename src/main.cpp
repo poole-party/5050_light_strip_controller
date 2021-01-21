@@ -293,11 +293,13 @@ void setup() {
 	pinMode(CLK, INPUT_PULLUP);
 	pinMode(DATA, INPUT);
 	pinMode(DATA, INPUT_PULLUP);
-	Serial.begin(9600);
+	pinMode(CS, OUTPUT);
+	Serial.begin(115200);
+	while (!Serial){;}
 	// Serial.println("KY-040 Start:");
 
 	analogWrite(RED, redLevel);
-	// initSD();
+	initSD();
 }
 
 void loop() {
