@@ -12,15 +12,31 @@ uint8_t greenLevel = 0;
 uint16_t outputLevel = 0;
 uint16_t incrementValue = 10;
 
-// sine lookup table
-const uint8_t lights[236] = {
-	0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 15, 17, 18, 20, 22, 24, 26, 28, 30, 32, 35, 37, 39, 42, 44, 47, 49, 52, 55, 58, 60, 63, 66, 69, 72, 75, 78, 81, 85, 88, 91, 94, 97, 
-	101, 104, 107, 111, 114, 117, 121, 124, 127, 131, 134, 137, 141, 144, 147, 150, 154, 157, 160, 163, 167, 170, 173, 176, 179, 182, 185, 188, 191, 194, 197, 200, 202, 205, 208, 210, 213, 215, 
-	217, 220, 222, 224, 226, 229, 231, 232, 234, 236, 238, 239, 241, 242, 244, 245, 246, 248, 249, 250, 251, 251, 252, 253, 253, 254, 254, 255, 255, 255, 255, 255, 255, 255, 254, 254, 253, 253,
-	252, 251, 251, 250, 249, 248, 246, 245, 244, 242, 241, 239, 238, 236, 234, 232, 231, 229, 226, 224, 222, 220, 217, 215, 213, 210, 208, 205, 202, 200, 197, 194,	191, 188, 185, 182, 179, 176, 
-	173, 170, 167, 163, 160, 157, 154, 150, 147, 144, 141, 137, 134, 131, 127, 124, 121, 117, 114, 111, 107, 104, 101, 
-	97, 94, 91,	88, 85, 81, 78, 75, 72, 69, 66, 63, 60, 58, 55, 52, 49, 47, 44, 42, 39, 37, 35, 32, 30, 28, 26, 24, 22, 20, 18, 17, 15, 13, 12,	11, 
-	9, 8, 7, 6, 5, 4, 3, 2, 2, 1, 1
+// lookup table for sine wave color transition
+const uint8_t sine8[] PROGMEM = {
+	0,   0,   0,   0,   0,   1,   1,   2,   2,   3,   4,   5,   6,   7,   8,   9, 
+	11,  12,  13,  15,  17,  18,  20,  22,  24,  26,  28,  30,  32,  35,  37,  39, 
+	42,  44,  47,  49,  52,  55,  58,  60,  63,  66,  69,  72,  75,  78,  81,  85, 
+	88,  91,  94,  97, 101, 104, 107, 111,  114, 117, 121, 124, 127, 131, 134, 137, 
+	141, 144, 147, 150, 154, 157, 160, 163, 167, 170, 173, 176, 179, 182, 185, 188, 
+	191, 194, 197, 200, 202, 205, 208, 210, 213, 215, 217, 220, 222, 224, 226, 229, 
+	231, 232, 234, 236, 238, 239, 241, 242, 244, 245, 246, 248, 249, 250, 251, 251, 
+	252, 253, 253, 254, 254, 255, 255, 255, 255, 255, 255, 255, 254, 254, 253, 253, 
+	252, 251, 251, 250, 249, 248, 246, 245, 244, 242, 241, 239, 238, 236, 234, 232, 
+	231, 229, 226, 224, 222, 220, 217, 215, 213, 210, 208, 205, 202, 200, 197, 194, 
+	191, 188, 185, 182, 179, 176, 173, 170, 167, 163, 160, 157, 154, 150, 147, 144, 
+	141, 137, 134, 131, 127, 124, 121, 117, 114, 111, 107, 104, 101,  97,  94,  91, 
+	88,  85,  81,  78,  75,  72,  69,  66,  63,  60,  58,  55,  52,  49,  47,  44, 
+	42,  39,  37,  35,  32,  30,  28,  26,  24,  22,  20,  18,  17,  15,  13,  12, 
+	11,  9,   8,   7,   6,   5,   4,   3,   2,   2,   1,   1,   0,   0,   0,   0, 
+	0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 
+	0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 
+	0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 
+	0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 
+	0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 
+	0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 
+	0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, 
+	0,   0,   0,   0,   0,   0,   0,   0 
 };
 
 // encoder vars
@@ -36,11 +52,12 @@ void cycle_color();
 
 // SD related vars
 File paramFile;
-float params[20];
+uint16_t params[4];
 const uint8_t CS = 10;
 
 // Support vars
 unsigned long lastRun = 0;
+double newParamsSet = 0;
 uint8_t totalModes = 2;
 uint8_t mode = 0;
 uint8_t fadeDelay = 50;
@@ -86,34 +103,20 @@ void doubleClickEvent() {
 	incrementValue = incrementValue < 10 ? 10 : 1;
 }
 
-void increment_color() {
-	int redOutput = (outputLevel+120)%360;
-	int greenOutput = (outputLevel)%360;
-	int blueOutput = (outputLevel+240)%360;
-	
-	redOutput = (redOutput <= 236) ? redOutput : 0;
-	greenOutput = (greenOutput <= 236) ? greenOutput : 0;
-	blueOutput = (blueOutput <= 236) ? blueOutput : 0;
+void setChannelColors(uint16_t redOut, uint16_t greenOut, uint16_t blueOut) {
+	analogWrite(RED, pgm_read_byte(&sine8[redOut]));
+	analogWrite(GREEN, pgm_read_byte(&sine8[greenOut]));
+	analogWrite(BLUE, pgm_read_byte(&sine8[blueOut]));
+}
 
-	analogWrite(RED, lights[redOutput]);
-	analogWrite(GREEN, lights[greenOutput]);
-	analogWrite(BLUE, lights[blueOutput]);
-	outputLevel += incrementValue;
+void increment_color() {
+	setChannelColors((outputLevel + 120) % 360, outputLevel % 360, (outputLevel + 240) % 360);
+	outputLevel = (outputLevel + incrementValue) % 360;
 }
 
 void decrement_color() {
-	int redOutput = (outputLevel+120)%360;
-	int greenOutput = (outputLevel)%360;
-	int blueOutput = (outputLevel+240)%360;
-	
-	redOutput = (redOutput <= 236) ? redOutput : 0;
-	greenOutput = (greenOutput <= 236) ? greenOutput : 0;
-	blueOutput = (blueOutput <= 236) ? blueOutput : 0;
-
-	analogWrite(RED, lights[redOutput]);
-	analogWrite(GREEN, lights[greenOutput]);
-	analogWrite(BLUE, lights[blueOutput]);
-	outputLevel -= incrementValue;
+	setChannelColors((outputLevel + 120) % 360, outputLevel % 360, (outputLevel + 240) % 360);
+	outputLevel = (outputLevel + (360 - incrementValue)) % 360;
 }
 
 void static_color() {
@@ -271,7 +274,7 @@ void initSD() {
 		paramFile = SD.open("params.txt");
 		if (!paramFile) {
 			Serial.print("No parameter file exists. Creating now... ");
-			char defaultSettings[256] = 
+			char defaultSettings[64] = 
 			"Mode: <0>\n"
 			"outputLevel: <0>\n"
 			"incrementValue: <10>\n";
@@ -309,17 +312,16 @@ void setup() {
 	pinMode(DATA, INPUT_PULLUP);
 	pinMode(CS, OUTPUT);
 	Serial.begin(115200);
-	while (!Serial){;}
-	// Serial.println("KY-040 Start:");
 
-	analogWrite(RED, redLevel);
 	initSD();
+	setChannelColors((outputLevel + 120) % 360, outputLevel % 360, (outputLevel + 240) % 360);
 }
 
 void loop() {
 	static int8_t c,val;
 	long currentTime = millis();
 
+	// set the speed to run the current mode at
 	if (mode > 0 && (currentTime - lastRun >= fadeDelay)) {
 		modeList[mode]();
 		lastRun = currentTime;
@@ -330,10 +332,12 @@ void loop() {
 		case 1:
 			// advance to the next mode
 			clickEvent();
+			newParamsSet = millis();
 			break;
 		case 2:
 			// cycle between coarse and fine adjustment
 			doubleClickEvent();
+			newParamsSet = millis();
 			break;
 		case 3:
 			// holdEvent();
@@ -369,5 +373,19 @@ void loop() {
 			// Serial.print("seven ");
 			// Serial.println(store,HEX);
 		}
+
+		newParamsSet = millis();
+	}
+
+	// Check if there are new params to be written and if we have waited sufficiently long between actions to write them
+	if (newParamsSet > 0 && (currentTime - newParamsSet >= 500)) {
+		String settingStr = 
+			"Mode: <" + String(mode) + ">\n"
+			"outputLevel: <" + String(outputLevel) + ">\n"
+			"incrementValue: <" + String(incrementValue) + ">\n";
+		char newSettings[64];
+		settingStr.toCharArray(newSettings, 64);
+		writeParams(newSettings);
+		newParamsSet = 0;
 	}
 }
