@@ -52,15 +52,15 @@ void cycle_color();
 
 // SD related vars
 File paramFile;
-uint16_t params[4];
+uint16_t params[5];
 const uint8_t CS = 10;
 
 // Support vars
 unsigned long lastRun = 0;
+uint8_t fadeDelay = 50;
 double newParamsSet = 0;
 uint8_t totalModes = 2;
 uint8_t mode = 0;
-uint8_t fadeDelay = 50;
 typedef void (*OptionMenu[])();
 OptionMenu modeList = {
 	static_color,
@@ -101,6 +101,13 @@ void clickEvent() {
 
 void doubleClickEvent() {
 	incrementValue = incrementValue < 10 ? 10 : 1;
+}
+
+void longHoldEvent() {
+	mode = 0;
+	outputLevel = 0;
+	incrementValue = 10;
+	fadeDelay = 50;
 }
 
 void setChannelColors(uint16_t redOut, uint16_t greenOut, uint16_t blueOut) {
@@ -274,10 +281,11 @@ void initSD() {
 		paramFile = SD.open("params.txt");
 		if (!paramFile) {
 			Serial.print("No parameter file exists. Creating now... ");
-			char defaultSettings[64] = 
+			char defaultSettings[80] = 
 			"Mode: <0>\n"
 			"outputLevel: <0>\n"
-			"incrementValue: <10>\n";
+			"incrementValue: <10>\n"
+			"fadeDelay: <50>\n";
 			if (writeParams(defaultSettings)) {
 				Serial.println("File created successfully!");
 			} else {
@@ -321,7 +329,7 @@ void loop() {
 	static int8_t c,val;
 	long currentTime = millis();
 
-	// set the speed to run the current mode at
+	// set the frame/sec speed to run the current mode at
 	if (mode > 0 && (currentTime - lastRun >= fadeDelay)) {
 		modeList[mode]();
 		lastRun = currentTime;
@@ -343,8 +351,8 @@ void loop() {
 			// holdEvent();
 			break;
 		case 4:
-			// reset all settings and return to standby mode
-			// longHoldEvent();
+			// reset all settings
+			longHoldEvent();
 			break;
 		default:
 			break;
@@ -378,13 +386,14 @@ void loop() {
 	}
 
 	// Check if there are new params to be written and if we have waited sufficiently long between actions to write them
-	if (newParamsSet > 0 && (currentTime - newParamsSet >= 500)) {
+	if (newParamsSet > 0 && (currentTime - newParamsSet >= 250)) {
 		String settingStr = 
 			"Mode: <" + String(mode) + ">\n"
 			"outputLevel: <" + String(outputLevel) + ">\n"
-			"incrementValue: <" + String(incrementValue) + ">\n";
-		char newSettings[64];
-		settingStr.toCharArray(newSettings, 64);
+			"incrementValue: <" + String(incrementValue) + ">\n"
+			"fadeDelay: <" + String(fadeDelay) + ">\n";
+		char newSettings[80];
+		settingStr.toCharArray(newSettings, 80);
 		writeParams(newSettings);
 		newParamsSet = 0;
 	}
