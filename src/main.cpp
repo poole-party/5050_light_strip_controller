@@ -6,9 +6,6 @@
 const uint8_t BLUE = 3;
 const uint8_t RED = 5;
 const uint8_t GREEN = 6;
-uint8_t blueLevel = 0;
-uint8_t redLevel = 255;
-uint8_t greenLevel = 0;
 uint16_t outputLevel = 0;
 uint16_t incrementValue = 10;
 
@@ -25,7 +22,7 @@ const uint8_t sine8[] PROGMEM = {
 	252, 251, 251, 250, 249, 248, 246, 245, 244, 242, 241, 239, 238, 236, 234, 232, 
 	231, 229, 226, 224, 222, 220, 217, 215, 213, 210, 208, 205, 202, 200, 197, 194, 
 	191, 188, 185, 182, 179, 176, 173, 170, 167, 163, 160, 157, 154, 150, 147, 144, 
-	141, 137, 134, 131, 127, 124, 121, 117, 114, 111, 107, 104, 101,  97,  94,  91, 
+	141, 137, 134, 131, 127, 124, 121, 117, 114, 111, 107, 104, 101, 97,  94,  91, 
 	88,  85,  81,  78,  75,  72,  69,  66,  63,  60,  58,  55,  52,  49,  47,  44, 
 	42,  39,  37,  35,  32,  30,  28,  26,  24,  22,  20,  18,  17,  15,  13,  12, 
 	11,  9,   8,   7,   6,   5,   4,   3,   2,   2,   1,   1,   0,   0,   0,   0, 
@@ -49,6 +46,8 @@ uint16_t store = 0;
 // function prototypes
 void static_color();
 void cycle_color();
+void setChannelColors(uint16_t redOut, uint16_t greenOut, uint16_t blueOut);
+void fadeOutAndIncrement();
 
 // SD related vars
 File paramFile;
@@ -64,8 +63,8 @@ uint8_t mode = 0;
 typedef void (*OptionMenu[])();
 OptionMenu modeList = {
 	static_color,
-	cycle_color, 
-};
+	cycle_color
+};									// you must update totalModes if you add or remove functions here
 
 // Button timing variables
 volatile uint8_t debounce = 20;		// ms debounce period to prevent flickering when pressing or releasing the button
@@ -95,6 +94,8 @@ void clickEvent() {
 		case 1:
 			incrementValue = 1;
 			break;
+		case 2:
+			break;
 	}
 	Serial.println(incrementValue);
 }
@@ -108,6 +109,7 @@ void longHoldEvent() {
 	outputLevel = 0;
 	incrementValue = 10;
 	fadeDelay = 50;
+	setChannelColors(outputLevel + 120, outputLevel, outputLevel + 240);
 }
 
 void setChannelColors(uint16_t redOut, uint16_t greenOut, uint16_t blueOut) {
@@ -135,7 +137,7 @@ void cycle_color() {
 }
 
 // Debounce the rotary encoder
-// A vald CW or CCW move returns 1, invalid returns 0.
+// A valid CW or CCW move returns 1, invalid returns 0.
 int8_t read_rotary() {
 	static int8_t rot_enc_table[] = {0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0};
 
@@ -304,6 +306,7 @@ void initSD() {
 			mode = (int) params[0];
 			outputLevel = (int) params[1];
 			incrementValue = (int) params[2];
+			fadeDelay = (int) params[3];
 		}
 	}
 }
@@ -366,7 +369,7 @@ void loop() {
 		if (prevNextCode==0x0b) {
 			if (mode == 0) 
 				decrement_color();
-			if (mode == 1) 
+			if (mode > 0) 
 				fadeDelay += 1;
 			// Serial.print("eleven ");
 			// Serial.println(store,HEX);
@@ -376,7 +379,7 @@ void loop() {
 		if (prevNextCode==0x07) {
 			if (mode == 0) 
 				increment_color();
-			if (mode == 1) 
+			if (mode > 0) 
 				fadeDelay -= 1;
 			// Serial.print("seven ");
 			// Serial.println(store,HEX);
